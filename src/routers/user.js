@@ -1,5 +1,7 @@
 const express = require('express')
 const User = require('../models/user')
+const auth = require('../middleware/auth')
+
 const router = new express.Router()
 
 router.post('/v1/users', async (request, response) => {
@@ -7,38 +9,19 @@ router.post('/v1/users', async (request, response) => {
 
   try {
     await user.save()
-    response.status(201).send(user)
+    const token = await user.generateToken()
+    response.status(201).send({ user, token })
   } catch (error) {
     console.error('Failed to save user.', user, error)
     response.status(400).send(error)
   }
 })
 
-router.get('/v1/users', async (request, response) => {
-  try {
-    const users = await User.find({})
-    response.send(users)
-  } catch (error) {
-    console.error('Failed to retrieve all users.', error)
-    response.status(500).send()
-  }
+router.get('/v1/users/me', auth, async (request, response) => {
+  response.send(request.user)
 })
 
-router.get('/v1/users/:id', async (request, response) => {
-  const _id = request.params.id
-  try {
-    const user = await User.findById(_id)
-    if (!user) {
-      return response.status(404).send()
-    }
-    response.send(user)
-  } catch (error) {
-    console.error('Failed to retrieve user with id.', _id, error)
-    response.status(500).send()
-  }
-})
-
-router.patch('/v1/users/:id', async (request, response) => {
+router.patch('/v1/users/me', auth, async (request, response) => {
   const updates = Object.keys(request.body)
   const allowedUpdates = new Set(['name', 'email', 'password', 'age'])
   const isValidOperation = updates.every(update => allowedUpdates.has(update))
@@ -49,32 +32,23 @@ router.patch('/v1/users/:id', async (request, response) => {
     })
   }
 
-  const _id = request.params.id
   try {
-    const user = await User.findById(_id)
-    if (!user) {
-      return response.status(404).send()
-    }
-    updates.forEach(update => (user[update] = request.body[update]))
-    await user.save()
+    updates.forEach(update => (request.user[update] = request.body[update]))
+    await request.user.save()
 
-    response.send(user)
+    response.send(request.user)
   } catch (error) {
-    console.error('Failed to update user with id.', _id, error)
+    console.error('Failed to update user with id.', request.user._id, error)
     response.status(400).send(error)
   }
 })
 
-router.delete('/v1/users/:id', async (request, response) => {
-  const _id = request.params.id
+router.delete('/v1/users/me', auth, async (request, response) => {
   try {
-    const user = await User.findByIdAndDelete(_id)
-    if (!user) {
-      return response.status(404).send()
-    }
+    await request.user.remove()
     response.status(204).send()
   } catch (error) {
-    console.error('Failed to delete user with id.', _id, error)
+    console.error('Failed to delete user with id.', request.user._id, error)
     response.status(500).send()
   }
 })
