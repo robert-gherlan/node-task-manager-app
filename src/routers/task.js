@@ -19,8 +19,31 @@ router.post('/v1/tasks', auth, async (request, response) => {
 })
 
 router.get('/v1/tasks', auth, async (request, response) => {
+  const match = {}
+  const sort = {}
+  if (request.query.completed) {
+    match.completed = request.query.completed === 'true'
+  }
+
+  if (request.query.description) {
+    match.description = request.query.description
+  }
+
+  if (request.query.sortBy) {
+    const parts = request.query.sortBy.split(':')
+    sort[parts[0]] = parts[1] === 'desc' ? -1 : 1
+  }
+
   try {
-    await request.user.populate('tasks')
+    await request.user.populate({
+      path: 'tasks',
+      match,
+      options: {
+        limit: parseInt(request.query.limit),
+        skip: parseInt(request.query.skip),
+        sort
+      }
+    })
     response.send(request.user.tasks)
   } catch (error) {
     console.error("Failed to retrieve user's tasks.", error)
