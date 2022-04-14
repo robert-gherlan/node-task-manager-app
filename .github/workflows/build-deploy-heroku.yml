@@ -24,7 +24,7 @@ jobs:
       EMAIL_FUNCTIONALITY_ENABLED : ${{secrets.EMAIL_FUNCTIONALITY_ENABLED}}
     services:
       mongo:
-        image: mongo:5.0-nanoserver
+        image: mongo:5.0.7-nanoserver
         env:
           MONGO_INITDB_ROOT_USERNAME: ${{secrets.DATABASE_ROOT_USERNAME}}
           MONGO_INITDB_ROOT_PASSWORD: ${{secrets.DATABASE_ROOT_PASSWORD}}
