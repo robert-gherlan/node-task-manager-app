@@ -3,12 +3,17 @@ require('./db/mongoose')
 const userRouter = require('./routers/user')
 const taskRouter = require('./routers/task')
 const authRouter = require('./routers/auth')
-const { model } = require('./db/mongoose')
+
+const swaggerUi = require('swagger-ui-express')
+const swaggerDocument = require('../swagger.json')
 
 const app = express()
 
 // Configure to use JSON
 app.use(express.json())
+
+// Configure Swagger UI
+app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocument))
 
 // Configure routers
 app.use(userRouter)

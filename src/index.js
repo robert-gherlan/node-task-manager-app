@@ -1,5 +1,5 @@
 const { port } = require('./config/config')
-const app = require('./index')
+const app = require('./app')
 
 // Start the server
 app.listen(port, () => {
